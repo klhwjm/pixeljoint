@@ -87,12 +87,10 @@ class Pixeljoint():
 		Initializes the list scraping loop.
 		"""
 
+		page = 1
 		for url in self.list:
-			page = 1
 
 			artist = self.parse_artist(url)
-			icons = self.parse_artist_icons(artist, page)
-			
 			print(f"Starting {artist.name} - {artist.id}")
 
 			# Creates a artist folder on the directory
@@ -100,19 +98,22 @@ class Pixeljoint():
 			if self.artist_exists(artist) == False:
 				self.create_folder(artist)
 
-			# Skips to the next artist if on the final page.
-			if icons == None:
-				print(f"Finished {artist.name} - {artist.id}")
-				continue
-			else:
+			while True:
+				icons = self.parse_artist_icons(artist, page)
 
-				for icon in icons:
-					image = self.parse_icon_image(icon)
+				# Skips to the next artist if on the final page.
+				if not icons:
+					print(f"Finished {artist.name} - {artist.id}")
+					break
+				else:
 
-					# Skips to the next icon if the image exists.
-					if self.image_exists(self.parse_image_name(image), artist):
-						continue
-					else:
-						self.save_image(image, artist)
+					for icon in icons:
+						image = self.parse_icon_image(icon)
 
-				page += 1
+						# Skips to the next icon if the image exists.
+						if self.image_exists(self.parse_image_name(image), artist):
+							continue
+						else:
+							self.save_image(image, artist)
+
+					page += 1
