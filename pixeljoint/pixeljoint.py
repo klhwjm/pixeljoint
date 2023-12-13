@@ -87,8 +87,8 @@ class Pixeljoint():
 		Initializes the list scraping loop.
 		"""
 
-		page = 1
 		for url in self.list:
+			page = 1
 
 			artist = self.parse_artist(url)
 			print(f"Starting {artist.name} - {artist.id}")
