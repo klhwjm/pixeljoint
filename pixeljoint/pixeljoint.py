@@ -23,8 +23,8 @@ class Pixeljoint():
 		Parses a Artist Object from a Artist URL.
 		"""
 		name_pattern = r'<title>Pixel Artist - (.+)</title>'
-		page_content = self.session.get(url).content
-		match = re.search(name_pattern, page_content.decode('utf-8'))
+		page_content = self.session.get(url).text
+		match = re.search(name_pattern, page_content)
 
 		_id = url.split('/')[-1].split('.')[0]
 
@@ -36,9 +36,9 @@ class Pixeljoint():
 		"""
 		icons_pattern = r'/pixelart/(\d+)\.htm'
 
-		page_content = self.session.get(f"https://pixeljoint.com/pixels/profile_tab_icons.asp?id={artist.id}&pg={page}").content
+		page_content = self.session.get(f"https://pixeljoint.com/pixels/profile_tab_icons.asp?id={artist.id}&pg={page}").text
 
-		return re.findall(icons_pattern, page_content.decode('utf-8'))
+		return re.findall(icons_pattern, page_content)
 
 	def parse_icon_image(self, _id: int) -> str:
 		"""
@@ -46,9 +46,9 @@ class Pixeljoint():
 		"""
 		image_pattern = r'<meta\s+property="og:image"\s+content="([^"]+)"\s*/>'
 
-		page_content = self.session.get(f"https://pixeljoint.com/pixelart/{_id}.htm").content
+		page_content = self.session.get(f"https://pixeljoint.com/pixelart/{_id}.htm").text
 
-		match = re.search(image_pattern, page_content.decode('utf-8'))
+		match = re.search(image_pattern, page_content)
 		return match[1]
 
 	def parse_image_name(self, url: str) -> str:
