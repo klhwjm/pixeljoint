@@ -1,5 +1,5 @@
 import subprocess
-import requests_cache
+import requests
 import re
 import os
 
@@ -10,13 +10,13 @@ class Artist():
 
 class Pixeljoint():
 
-	def __init__(self, directory: str, _list: str, session: requests_cache.CachedSession):
+	def __init__(self, directory: str, _list: str, session: requests.Session):
 		
 		self.directory: str = directory
 		
 		self.list: str = _list
 		
-		self.session: requests_cache.CachedSession = session
+		self.session: requests.Session = session
 
 	def parse_artist(self, url: str) -> Artist:
 		"""
@@ -40,7 +40,7 @@ class Pixeljoint():
 
 		return re.findall(icons_pattern, page_content)
 
-'	def parse_icon_image(self, _id: int) -> str:
+	def parse_icon_image(self, _id: int) -> str:
 		"""
 		Gets image URL from given icon id.
 		"""
@@ -100,7 +100,6 @@ class Pixeljoint():
 
 			while True:
 				icons = self.parse_artist_icons(artist, page)
-				print(icons)
 
 				# Skips to the next artist if on the final page.
 				if not icons:
