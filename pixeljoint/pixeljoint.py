@@ -1,119 +1,66 @@
-import subprocess
-import requests
-import re
-import os
-
-class Artist():
-	def __init__(self, name: str, _id: int):
-		self.name = name
-		self.id = _id
+from pixeljoint.artist import Artist
+from pixeljoint.archive import Archive
+from pixeljoint.icon import Icon
+from pixeljoint.misc import Misc
 
 class Pixeljoint():
-
-	def __init__(self, directory: str, _list: str, session: requests.Session):
-		
+	"""
+	This class is the root class that is responsible
+	for the main scraping.
+	"""
+	def __init__(self, directory: str, _list: str, archive: str):
 		self.directory: str = directory
 		
-		self.list: str = _list
-		
-		self.session: requests.Session = session
+		with open(_list, "r", encoding="utf-8") as f:
+			self.list = f.read().splitlines()
 
-	def parse_artist(self, url: str) -> Artist:
-		"""
-		Parses a Artist Object from a Artist URL.
-		"""
-		name_pattern = r'<title>Pixel Artist - (.+)</title>'
-		page_content = self.session.get(url).text
-		match = re.search(name_pattern, page_content)
+		self.archive: str = archive
 
-		_id = url.split('/')[-1].split('.')[0]
+	def start(self):
+		"""
+		Starts the main scraping of the profile list.
+		"""
+		archive = Archive.load(self.archive)
 
-		return Artist(match[1], _id)
-
-	def parse_artist_icons(self, artist: Artist, page: int) -> list:
-		"""
-		Parses icons from a Artist (Object) on the given page.
-		"""
-		icons_pattern = r'/pixelart/(\d+)\.htm'
-
-		page_content = self.session.get(f"https://pixeljoint.com/pixels/profile_tab_icons.asp?id={artist.id}&pg={page}").text
-
-		return re.findall(icons_pattern, page_content)
-
-	def parse_icon_image(self, _id: int) -> str:
-		"""
-		Gets image URL from given icon id.
-		"""
-		image_pattern = r'<meta\s+property="og:image"\s+content="([^"]+)"\s*/>'
-
-		page_content = self.session.get(f"https://pixeljoint.com/pixelart/{_id}.htm").text
-
-		match = re.search(image_pattern, page_content)
-		return match[1]
-
-	def parse_image_name(self, url: str) -> str:
-		"""
-		Gets the image name from url.
-		"""
-		return url.split("/")[-1]
-
-	def create_folder(self, artist: Artist) -> None:
-		"""
-		Creates the Artist folder.
-		"""
-		os.mkdir(f"{self.directory}/{artist.id}_{artist.name}")
-
-	def save_image(self, url: str, artist: Artist) -> None:
-		"""
-		Downloads the given image by URL on the Artist folder.
-		Currently using subprocess wget, could change if needed.
-		"""
-		subprocess.run(["wget", "-nv", "-P", f"{self.directory}/{artist.id}_{artist.name}", url], check=True)
-
-	def image_exists(self, name: str, artist: Artist) -> bool:
-		"""
-		Checks if the image exists on the given artist folder.
-		"""
-		return os.path.exists(f"{self.directory}/{artist.id}_{artist.name}/{name}")
-
-	def artist_exists(self, artist: Artist) -> bool:
-		"""
-		Check if artist folder exists.
-		"""
-		return os.path.isdir(f"{self.directory}/{artist.id}_{artist.name}")
-
-	def start(self) -> None:
-		"""
-		Initializes the list scraping loop.
-		"""
-
+		# Loops trough all the profiles on the given list.
 		for url in self.list:
 			page = 1
 
-			artist = self.parse_artist(url)
+			# Parses the artist information from the profile url.
+			artist = Artist.parse(url)
+
 			print(f"Starting {artist.name} - {artist.id}")
 
-			# Creates a artist folder on the directory
-			# if the folder doesnt exists.
-			if self.artist_exists(artist) == False:
-				self.create_folder(artist)
+			# Creates the artist folder in case it doesnt exists.
+			if not artist.exists(self.directory):
+				artist.create(self.directory)
 
+			# Start looping trough the icons pages.
 			while True:
-				icons = self.parse_artist_icons(artist, page)
+				# Parses the artist icons.
+				icons = artist.icons(page)
 
-				# Skips to the next artist if on the final page.
+				# If there arent more icons, break the loop.
 				if not icons:
 					print(f"Finished {artist.name} - {artist.id}")
 					break
-				else:
 
-					for icon in icons:
-						image = self.parse_icon_image(icon)
+				# If there is icons on the page, loop trough them.
+				for icon in icons:
 
-						# Skips to the next icon if the image exists.
-						if self.image_exists(self.parse_image_name(image), artist):
-							continue
-						else:
-							self.save_image(image, artist)
+					# If the icon id is on the archive, go to the next icon.
+					if archive.exists(icon):
+						continue
+					# If is not.
+					else:
+						# Parse the icon image.
+						image = Icon.parse(icon)
 
-					page += 1
+						# Download the image.
+						Misc.save(image.url, f"{self.directory}/{artist.id}_{artist.name}")
+
+						# Write it on the archive.
+						archive.write(icon)
+
+				# Increase page counting.
+				page += 1
