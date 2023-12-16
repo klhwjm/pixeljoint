@@ -11,10 +11,10 @@ Pixeljoint artists scrapper made on python.
 ### Example Command
 
 profile_list_file.txt (dummy file)
----
-https://pixeljoint.com/p/7755.htm
+`
+https://pixeljoint.com/p/7755.htm\n
 https://pixeljoint.com/p/6741.htm
----
+`
 
 ```bash
 pixeljoint -o PATH -a archive.txt profile_list_file.txt
