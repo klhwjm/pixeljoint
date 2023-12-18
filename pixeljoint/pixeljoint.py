@@ -22,50 +22,45 @@ class Pixeljoint():
 		"""
 		archive = Archive.load(self.archive)
 
-		# Made that try to call archive.close() on end.
-		try:
-			# Loops trough all the profiles on the given list.
-			for url in self.list:
-				page = 1
+		# Loops trough all the profiles on the given list.
+		for url in self.list:
+			page = 1
 
-				# Parses the artist information from the profile url.
-				artist = Artist.parse(url)
+			# Parses the artist information from the profile url.
+			artist = Artist.parse(url)
 
-				print(f"Starting {artist.name} - {artist.id}")
+			print(f"Starting {artist.name} - {artist.id}")
 
-				# Creates the artist folder in case it doesnt exists.
-				if not artist.exists(self.directory):
-					artist.create(self.directory)
+			# Creates the artist folder in case it doesnt exists.
+			if not artist.exists(self.directory):
+				artist.create(self.directory)
 
-				# Start looping trough the icons pages.
-				while True:
-					# Parses the artist icons.
-					icons = artist.icons(page)
+			# Start looping trough the icons pages.
+			while True:
+				# Parses the artist icons.
+				icons = artist.icons(page)
 
-					# If there arent more icons, break the loop.
-					if not icons:
-						print(f"Finished {artist.name} - {artist.id}")
-						break
+				# If there arent more icons, break the loop.
+				if not icons:
+					print(f"Finished {artist.name} - {artist.id}")
+					break
 
-					# If there is icons on the page, loop trough them.
-					for icon in icons:
+				# If there is icons on the page, loop trough them.
+				for icon in icons:
 
-						# If the icon id is on the archive, go to the next icon.
-						if archive.exists(icon):
-							continue
-						# If is not.
-						else:
-							# Parse the icon image.
-							image = Icon.parse(icon)
+					# If the icon id is on the archive, go to the next icon.
+					if archive.exists(icon):
+						continue
+					# If is not.
+					else:
+						# Parse the icon image.
+						image = Icon.parse(icon)
 
-							# Download the image.
-							Misc.save(image.url, f"{self.directory}/{artist.id}_{artist.name}")
+						# Download the image.
+						Misc.save(image.url, f"{self.directory}/{artist.id}_{artist.name}")
 
-							# Write it on the archive.
-							archive.write(icon)
+						# Write it on the archive.
+						archive.write(icon)
 
-					# Increase page counting.
-					page += 1
-		# When everything ends.
-		finally:
-			archive.close()
+				# Increase page counting.
+				page += 1
