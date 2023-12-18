@@ -1,3 +1,5 @@
+import sqlite3
+
 class Archive():
 	"""
 	This class represents the methods used on
@@ -5,32 +7,48 @@ class Archive():
 	on downloaded icons.
 	"""
 	def __init__(self, path: str):
-		self.path: str = path
+		self.conn = sqlite3.connect(path)
+		self.cursor = self.conn.cursor()
+
+		self.verify_table()
 
 	@staticmethod
 	def load(path: str):
 		return Archive(path)
+
+	def verify_table(self) -> None:
+		"""
+		Creates the table `downloaded` if it does not exists.
+		"""
+		self.cursor.execute('CREATE TABLE IF NOT EXISTS downloaded (id INTEGER)')
+		self.conn.commit()
 
 	def write(self, _id: int) -> None:
 		"""
 		Writes a icon id on the archive.
 
 		Arguments:
-			path: The archive file path.
-			_id: The given icon id.
+			_id: The icon id.
 		"""
-		with open(self.path, 'a', encoding="utf-8") as file:
-			file.write(_id + '\n')
+		self.cursor.execute("INSERT INTO downloaded (id) VALUES (?)", (_id,))
+		self.conn.commit()
 
 	def exists(self, _id: int) -> bool:
 		"""
 		Verifies if the given icon id exists on the archive.
 
 		Arguments:
-			path: The archive file path.
 			_id: The target icon id.
 		Returns:
 			bool: If the icon exists or not.
 		"""
-		with open(self.path, 'r', encoding="utf-8") as file:
-			return any(_id in line for line in file)
+		self.cursor.execute("SELECT id FROM downloaded WHERE id=?", (_id,))
+		result = self.cursor.fetchone()
+
+		return result is not None
+
+	def close(self) -> None:
+		"""
+		Closes the SQLITE3 Connection.
+		"""
+		self.conn.close()
