@@ -1,2 +1,6 @@
 list.txt
 archive.txt
+pixeljoint.spec
+cli.spec
+dist/
+build/
